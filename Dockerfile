@@ -59,8 +59,7 @@ RUN ldconfig
 RUN zkg autoconfig --force
 RUN zeek -N Seiso::Kafka
 
-CMD ["/usr/sbin/sshd", "-D"]
-
+CMD ["tail", "-f", "/dev/null"]
 
 
 
