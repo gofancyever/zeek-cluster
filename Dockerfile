@@ -1,5 +1,6 @@
 FROM zeek/zeek:latest
 
+USER root
 RUN apt install apt-transport-https ca-certificates
 
 RUN cat > /etc/apt/sources.list <<EOF
@@ -35,8 +36,8 @@ RUN apt-get -q update \
     python3-pip \
     libssl-dev \
     libpcap-dev \
-    openssh-client 
-
+    openssh-client \
+    openssh-server 
 RUN curl -L https://github.com/edenhill/librdkafka/archive/v1.4.4.tar.gz | tar xvz
 WORKDIR /librdkafka-1.4.4/
 
@@ -47,6 +48,7 @@ RUN make
 RUN make install
 
 WORKDIR /
+
 RUN git clone https://github.com/SeisoLLC/zeek-kafka.git
 WORKDIR /zeek-kafka/
 RUN ./configure --with-librdkafka=$librdkafka_root
@@ -57,18 +59,9 @@ RUN ldconfig
 RUN zkg autoconfig --force
 RUN zeek -N Seiso::Kafka
 
+CMD ["/usr/sbin/sshd", "-D"]
 
-# Generate SSH keys
-RUN mkdir -p /root/.ssh && \
-    ssh-keygen -t rsa -b 2048 -f /root/.ssh/id_rsa -N '' && \
-    cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys && \
-    chmod 600 /root/.ssh/authorized_keys
 
-COPY deploy.sh /deploy.sh
-RUN chmod +x /deploy.sh
-
-USER root
-ENTRYPOINT ["/deploy.sh"]
 
 
 
